@@ -2,51 +2,50 @@
 
 ```mermaid
 flowchart TD
-    A(Start) --> B(check_config_access)
+    A(Start) --> B(Check config access)
     B -->|If fails| C(HTTP 403 Forbidden) 
     C --> D(Exit)
     B -->|Success| E(Parse JSON from request)
     E --> |If not a list| F(HTTP 400 Bad Request) 
     F --> G(Exit)
-    E --> |Is list| H(Initialize empty list: existing_promptlet_ids)
+    E --> |Is list| H(Initialize empty list)
     
-    H --> I(For each promptlet in promptlet_updates)
-    I --> J(Check if "type" and "id" are present)
+    H --> I(Loop through promptlet updates)
+    I --> J(Check required params)
     J --> |If missing| K(HTTP 400 Bad Request)
     K --> L(Exit)
-    J --> |Present| M(Add "id" and "parent_id" to existing_promptlet_ids)
+    J --> |Present| M(Add IDs to list)
     
-    M --> N(Retrieve existing promptlets by IDs from DB)
-    N --> O(Sort promptlet_updates)
-    O --> P(Sort by: promptlets without parent_id first)
+    M --> N(Retrieve existing promptlets from DB)
+    N --> O(Sort promptlets)
+    O --> P(Loop through sorted updates)
     
-    P --> Q(For each promptlet in sorted promptlet_updates)
-    Q --> |type == "update"| R{If promptlet exists}
-    R --> |Exists| S(Update promptlet_text)
-    S --> T(Process submission)
-    T --> Q
+    P --> |type == "update"| Q{If promptlet exists}
+    Q --> |Exists| R(Update promptlet text)
+    R --> S(Process submission)
+    S --> P
     
-    R --> |Not found| U(HTTP 404 Not Found)
-    U --> V(Exit)
+    Q --> |Not found| T(HTTP 404 Not Found)
+    T --> U(Exit)
     
-    Q --> |type == "create"| W(Create new Promptlet)
-    W --> X{If parent_id is present}
-    X --> |Present| Y(Find parent_promptlet)
-    Y --> Z{If found}
-    Z --> |Found| AA(Set new_promptlet's parent_id and append to parent’s children)
-    AA --> AB(Add new_promptlet to DB and existing_promptlets_by_id)
+    P --> |type == "create"| V(Create new promptlet)
+    V --> W{If parent ID is present}
+    W --> |Present| X(Find parent promptlet)
+    X --> Y{If found}
+    Y --> |Found| Z(Set parent ID and append to parent)
+    Z --> AA(Add new promptlet to DB)
     
-    Z --> |Not found| AB
-    X --> |Not present| AB
+    Y --> |Not found| AA
+    W --> |Not present| AA
     
-    Q --> |type == "delete"| AC{If promptlet exists}
-    AC --> |Exists| AD(Disable promptlet (set enabled = False))
-    AD --> AE(Commit DB transaction)
-    AE --> Q
-    AC --> |Not found| AE
+    P --> |type == "delete"| AB{If promptlet exists}
+    AB --> |Exists| AC(Disable promptlet)
+    AC --> AD(Commit DB transaction)
+    AD --> P
+    AB --> |Not found| AD
     
-    AE --> AF(Split scopes by comma into return_scopes)
-    AF --> AG(For each scope in return_scopes)
-    AG --> AH(Retrieve promptlet tree from DB for the scope)
-    AH --> AI(Return all retrieved promptlets as the response)
-    AI --> AJ(End)
+    AD --> AE(Split scopes)
+    AE --> AF(Loop through scopes)
+    AF --> AG(Retrieve promptlet tree from DB)
+    AG --> AH(Return promptlets as response)
+    AH --> AI(End)
