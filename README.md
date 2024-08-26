@@ -1,3 +1,6 @@
+# Flowchart for post_tree_promptlets_for_shop Function
+
+```mermaid
 flowchart TD
     A[Start] --> B[check_config_access]
     B -->|If fails| C[HTTP 403 Forbidden] 
